@@ -6,10 +6,9 @@ use std::path::Path;
 
 #[derive(Debug)]
 pub struct Interpreter {
-    file: File,
-    tokens: Vec<char>,
-    pointer: i64,
-    tape: HashMap<i64, i64>,
+    pub(crate) file: File,
+    pub(crate) pointer: i64,
+    pub(crate) tape: HashMap<i64, i64>,
 }
 
 impl Interpreter {
@@ -26,13 +25,12 @@ impl Interpreter {
     fn default(file_path: &Path) -> Self {
         Interpreter {
             file: File::open(file_path).unwrap(),
-            tokens: vec!['>', '<', '+', '-', '.', ',', '[', ']'],
             pointer: 0,
             tape: HashMap::new(),
         }
     }
 
-    pub fn process_file(&mut self) {
+    pub fn process_file(&mut self) -> String {
         let reader = BufReader::new(&self.file);
         let mut tokens: Vec<String> = Vec::new();
 
@@ -43,11 +41,12 @@ impl Interpreter {
             }
         }
 
-        self.process_tokens(&tokens);
+        self.process_tokens(&tokens)
     }
 
-    fn process_tokens(&mut self, tokens: &[String]) {
+    fn process_tokens(&mut self, tokens: &[String]) -> String {
         let mut loop_stack: Vec<usize> = Vec::new();
+        let mut output: String = String::new();
 
         let mut i = 0; // Use a separate index variable to control loop iteration
 
@@ -66,7 +65,7 @@ impl Interpreter {
                 }
                 "." => {
                     let value = self.tape.entry(self.pointer).or_insert(0);
-                    print!("{}", char::from(*value as u8));
+                    output.push(char::from(*value as u8));
                 }
                 "," => {
                     let mut input = String::new();
@@ -87,9 +86,11 @@ impl Interpreter {
                         panic!("Unmatched ']' bracket");
                     }
                 }
-                _ => {}
+                _ => { /* Ignore token as a comment */}
             }
             i += 1;
         }
+
+        output
     }
 }
